@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<ruleset name="Revmura-Core">
+  <description>WPCS + PHPCompatibility for PHP 8.3 (PSR-4 friendly)</description>
+
+  <file>./</file>
+
+  <exclude-pattern>vendor/*</exclude-pattern>
+  <exclude-pattern>node_modules/*</exclude-pattern>
+
+  <!-- Base standards -->
+  <rule ref="WordPress-Extra"/>
+  <rule ref="PHPCompatibility"/>
+  <config name="testVersion" value="8.3-"/>
+
+  <!-- Allow PSR-4 filenames & camelCase without errors -->
+  <rule ref="WordPress-Extra">
+    <exclude name="WordPress.Files.FileName"/>
+    <exclude name="WordPress.NamingConventions.ValidVariableName"/>
+    <exclude name="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid"/>
+  </rule>
+
+  <!-- Useful security checks -->
+  <rule ref="WordPress.Security.ValidatedSanitizedInput"/>
+  <rule ref="WordPress.WP.GlobalVariablesOverride"/>
+
+  <!-- Warnings visible but not failing hard initially -->
+  <config name="severity" value="5"/>
+</ruleset>
