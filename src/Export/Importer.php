@@ -113,7 +113,7 @@ final class Importer {
 			}
 			$args               = is_array( $def['args'] ?? null ) ? $def['args'] : array();
 			$out_taxes[ $slug ] = array(
-				'object_type' => $object_type ?: array( 'post' ),
+				'object_type' => ( ! empty( $object_type ) ) ? $object_type : array( 'post' ),
 				'args'        => $args,
 			);
 		}

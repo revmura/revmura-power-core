@@ -60,8 +60,8 @@ if ( is_multisite() ) {
 			'number' => 0,
 		)
 	);
-	foreach ( $site_ids as $blog_id ) {
-		switch_to_blog( (int) $blog_id );
+	foreach ( $site_ids as $site_id ) {
+		switch_to_blog( (int) $site_id );
 		revmura_core_delete_current_site_cache();
 		restore_current_blog();
 	}
@@ -71,12 +71,12 @@ if ( is_multisite() ) {
 
 // Remove our capability from all roles.
 if ( function_exists( 'wp_roles' ) ) {
-	$wp_roles = wp_roles();
-	if ( $wp_roles instanceof \WP_Roles ) {
-		foreach ( array_keys( $wp_roles->roles ) as $role_name ) {
-			$role = get_role( $role_name );
-			if ( $role && $role->has_cap( REVMURA_CAP ) ) {
-				$role->remove_cap( REVMURA_CAP );
+	$roles = wp_roles();
+	if ( $roles instanceof \WP_Roles ) {
+		foreach ( array_keys( $roles->roles ) as $role_name ) {
+			$role_obj = get_role( $role_name );
+			if ( $role_obj && $role_obj->has_cap( REVMURA_CAP ) ) {
+				$role_obj->remove_cap( REVMURA_CAP );
 			}
 		}
 	}
