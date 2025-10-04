@@ -6,6 +6,7 @@
  */
 
 declare(strict_types=1);
+// phpcs:disable WordPress.Files.FileName
 
 namespace Revmura\Core\Export;
 
@@ -124,3 +125,4 @@ final class Importer {
 		);
 	}
 }
+// phpcs:enable WordPress.Files.FileName

@@ -21,14 +21,24 @@ require_once ABSPATH . 'wp-admin/includes/file.php';
 WP_Filesystem();
 global $wp_filesystem;
 
+if ( ! ( $wp_filesystem instanceof \WP_Filesystem_Base ) ) {
+	// Cannot safely modify files.
+	return;
+}
+
 /**
  * Delete the LKG cache file for the current site.
+ *
+ * @return void
  */
-$delete_site_cache = static function (): void use ( $wp_filesystem ) {
+function revmura_core_delete_site_cache(): void {
+	global $wp_filesystem;
+
 	$uploads = wp_upload_dir( null, false ); // Current site uploads (multisite-aware).
 	if ( ! empty( $uploads['error'] ) || empty( $uploads['basedir'] ) ) {
 		return;
 	}
+
 	$basedir = (string) $uploads['basedir'];
 	$dir     = trailingslashit( wp_normalize_path( $basedir ) ) . 'revmura';
 	$file    = trailingslashit( $dir ) . 'cpt-cache.json';
@@ -40,9 +50,8 @@ $delete_site_cache = static function (): void use ( $wp_filesystem ) {
 		// Best-effort: remove directory if empty (fails silently if not empty).
 		$wp_filesystem->rmdir( $dir );
 	}
-};
+}
 
-// Single site or multisite.
 if ( is_multisite() ) {
 	$site_ids = get_sites(
 		array(
@@ -52,11 +61,11 @@ if ( is_multisite() ) {
 	);
 	foreach ( $site_ids as $blog_id ) {
 		switch_to_blog( (int) $blog_id );
-		$delete_site_cache();
+		revmura_core_delete_site_cache();
 		restore_current_blog();
 	}
 } else {
-	$delete_site_cache();
+	revmura_core_delete_site_cache();
 }
 
 // Remove our capability from all roles.
@@ -71,11 +80,3 @@ if ( function_exists( 'wp_roles' ) ) {
 		}
 	}
 }
-
-// (Optional) If you ever store options/transients, delete them here.
-// Example:
-// foreach ( array_keys( wp_load_alloptions() ) as $k ) {
-//     if ( str_starts_with( $k, 'revmura_' ) ) {
-//         delete_option( $k );
-//     }
-// }
