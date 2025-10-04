@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Revmura CPT/Tax Schema v1.0",
+  "type": "object",
+  "required": ["schema_version", "cpts", "taxes"],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "cpts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string" },
+          "supports": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["title","editor","thumbnail","revisions","excerpt","author","page-attributes","custom-fields","comments","trackbacks"]
+            },
+            "uniqueItems": true
+          },
+          "rewrite": {
+            "type": "object",
+            "properties": {
+              "slug": { "type": "string" },
+              "with_front": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "taxes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "object_type": {
+            "type": "array",
+            "items": { "type": "string" },
+            "uniqueItems": true
+          },
+          "args": { "type": "object" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

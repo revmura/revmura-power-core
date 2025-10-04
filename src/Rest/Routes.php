@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace Revmura\Core\Rest;
 
-use Revmura\Core\Registry\CptRegistryWp;
 use Revmura\Core\Export\Exporter;
 use Revmura\Core\Export\Importer;
 
@@ -52,9 +51,7 @@ final class Routes {
 							return current_user_can( REVMURA_CAP );
 						},
 						'callback'            => static function () {
-							// NOTE: replace with your live registry instance if you keep one globally.
-							$reg  = new CptRegistryWp();
-							$json = Exporter::json( $reg );
+							$json = Exporter::json();
 
 							return new \WP_REST_Response(
 								$json,
@@ -67,16 +64,17 @@ final class Routes {
 					)
 				);
 
-				// Shared permission callback for import endpoints (cap + nonce).
+				// Shared permission callback for import endpoints (cap + custom action nonce).
 				$import_permission = static function ( \WP_REST_Request $req ) {
 					if ( ! current_user_can( REVMURA_CAP ) ) {
 						return new \WP_Error( 'rest_forbidden', __( 'Insufficient capability.', 'revmura' ), array( 'status' => 403 ) );
 					}
-					// Verify nonce from REST header (preferred for REST requests).
-					$nonce_header = $req->get_header( 'x_wp_nonce' );
-					$nonce        = is_string( $nonce_header ) ? sanitize_text_field( $nonce_header ) : '';
-					if ( ! wp_verify_nonce( $nonce, 'revmura_import' ) ) {
-						return new \WP_Error( 'rest_forbidden', __( 'Invalid or missing nonce.', 'revmura' ), array( 'status' => 403 ) );
+					// WP cookie auth uses X-WP-Nonce = wp_create_nonce('wp_rest').
+					// We add our own action nonce for import operations:
+					$act = $req->get_header( 'x-revmura-nonce' );
+					$act = is_string( $act ) ? sanitize_text_field( $act ) : '';
+					if ( ! wp_verify_nonce( $act, 'revmura_import' ) ) {
+						return new \WP_Error( 'rest_forbidden', __( 'Invalid or missing action nonce.', 'revmura' ), array( 'status' => 403 ) );
 					}
 					return true;
 				};

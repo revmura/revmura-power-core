@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Revmura Power Core
  * Description: Engine for CPT/Tax schemas, meta registry, REST, import/export, caps, and LKG cache. No UI.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Requires at least: 6.5
  * Requires PHP: 8.3
  * Author: Saleh Bamatraf
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const REVMURA_CORE_VER = '1.0.0';
+const REVMURA_CORE_VER = '1.0.1';
 const REVMURA_CORE_API = '1.0.0';
 const REVMURA_CAP      = 'revmura_manage_core';
 
@@ -42,6 +42,16 @@ register_activation_hook(
 );
 
 /**
+ * Load translations (if any).
+ */
+add_action(
+	'plugins_loaded',
+	static function (): void {
+		load_plugin_textdomain( 'revmura', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+	}
+);
+
+/**
  * Healthy boot flag (MU Guard reads this).
  */
 add_action(
@@ -56,6 +66,9 @@ add_action(
 /**
  * Write Last-Known-Good cache when the registry commits.
  *
+ * Uses wp_upload_dir() so paths are correct on multisite and custom upload dirs.
+ * Writes via WP_Filesystem to satisfy WPCS.
+ *
  * @param array<string,mixed> $snapshot Registry snapshot.
  */
 add_action(
@@ -66,16 +79,33 @@ add_action(
 			return;
 		}
 
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		WP_Filesystem();
-		global $wp_filesystem;
+		$uploads = wp_upload_dir( null, false ); // Current site uploads (multisite-aware).
+		if ( ! empty( $uploads['error'] ) || empty( $uploads['basedir'] ) ) {
+			return;
+		}
 
-		$dir  = wp_normalize_path( WP_CONTENT_DIR . '/uploads/revmura' );
+		$dir  = wp_normalize_path( trailingslashit( (string) $uploads['basedir'] ) . 'revmura' );
 		$path = trailingslashit( $dir ) . 'cpt-cache.json';
 
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		WP_Filesystem();
+
+		global $wp_filesystem;
 		if ( wp_mkdir_p( $dir ) && $wp_filesystem instanceof \WP_Filesystem_Base ) {
 			// Use WP_Filesystem (WPCS: no direct file writes).
 			$wp_filesystem->put_contents( $path, $json, FS_CHMOD_FILE );
+		}
+	}
+);
+
+/**
+ * Register REST routes.
+ */
+add_action(
+	'plugins_loaded',
+	static function (): void {
+		if ( class_exists( \Revmura\Core\Rest\Routes::class ) ) {
+			\Revmura\Core\Rest\Routes::register();
 		}
 	}
 );
