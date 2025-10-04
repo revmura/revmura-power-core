@@ -22,7 +22,7 @@ WP_Filesystem();
 global $wp_filesystem;
 
 if ( ! ( $wp_filesystem instanceof \WP_Filesystem_Base ) ) {
-	// Cannot safely modify files.
+	// Cannot safely modify files; abort quietly.
 	return;
 }
 
@@ -31,7 +31,7 @@ if ( ! ( $wp_filesystem instanceof \WP_Filesystem_Base ) ) {
  *
  * @return void
  */
-function revmura_core_delete_site_cache(): void {
+function revmura_core_delete_current_site_cache(): void {
 	global $wp_filesystem;
 
 	$uploads = wp_upload_dir( null, false ); // Current site uploads (multisite-aware).
@@ -43,15 +43,16 @@ function revmura_core_delete_site_cache(): void {
 	$dir     = trailingslashit( wp_normalize_path( $basedir ) ) . 'revmura';
 	$file    = trailingslashit( $dir ) . 'cpt-cache.json';
 
-	if ( $wp_filesystem instanceof \WP_Filesystem_Base ) {
-		if ( $wp_filesystem->exists( $file ) ) {
-			$wp_filesystem->delete( $file );
-		}
-		// Best-effort: remove directory if empty (fails silently if not empty).
-		$wp_filesystem->rmdir( $dir );
+	// Delete the cache file if present (use WP_Filesystem to satisfy WPCS).
+	if ( $wp_filesystem->exists( $file ) ) {
+		$wp_filesystem->delete( $file );
 	}
+
+	// Best-effort: remove directory if empty (silently fails if not empty).
+	$wp_filesystem->rmdir( $dir );
 }
 
+// Delete cache on all sites (or the single site).
 if ( is_multisite() ) {
 	$site_ids = get_sites(
 		array(
@@ -61,11 +62,11 @@ if ( is_multisite() ) {
 	);
 	foreach ( $site_ids as $blog_id ) {
 		switch_to_blog( (int) $blog_id );
-		revmura_core_delete_site_cache();
+		revmura_core_delete_current_site_cache();
 		restore_current_blog();
 	}
 } else {
-	revmura_core_delete_site_cache();
+	revmura_core_delete_current_site_cache();
 }
 
 // Remove our capability from all roles.
