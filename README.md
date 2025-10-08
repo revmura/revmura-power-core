@@ -102,9 +102,26 @@ add_action('plugins_loaded', function () {
 ## Development
 
 ```bash
+# install dev tools (PHPCS/WPCS/etc.)
 composer install
-vendor/bin/phpcbf .
-vendor/bin/phpcs -q --report=summary
+
+# auto-fix what can be fixed, then check (cross-platform)
+composer run lint:fix
+composer run lint
 ```
 
-PHPCS runs in CI via `.github/workflows/phpcs.yml`.
+PHPCS uses the project ruleset (`phpcs.xml.dist`) and also runs in CI via `.github/workflows/phpcs.yml`.
+
+**Raw commands (only if you’re not using composer scripts):**
+
+**Windows (PowerShell):**
+```powershell
+vendor\bin\phpcbf.bat -p -s --standard=phpcs.xml.dist .
+vendor\bin\phpcs.bat  -q -p -s --standard=phpcs.xml.dist .
+```
+
+**macOS/Linux:**
+```bash
+vendor/bin/phpcbf -p -s --standard=phpcs.xml.dist .
+vendor/bin/phpcs  -q -p -s --standard=phpcs.xml.dist .
+```
